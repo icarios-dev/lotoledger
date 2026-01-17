@@ -1,0 +1,13 @@
+# Indentation
+spaces = 4
+
+# Line length
+wrap-limit = 120
+
+# Keyword/type/function casing
+keyword-case = 1
+type-case = 1
+function-case = 1
+
+no-extra-line=1
+no-space-function=1
