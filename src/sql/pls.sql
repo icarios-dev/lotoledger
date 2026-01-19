@@ -10,18 +10,15 @@ create extension if not exists plpgsql_check;
 --
 do $$
 begin
-    if not exists(
-        select
-            1
-        from
-            pg_roles
-        where
-            rolname = 'app_loto_pls') then
+  if not exists(
+    select 1 from pg_roles where rolname = 'app_loto_pls'
+    )
+  then
     create role app_loto_pls;
-end if;
+  end if;
 end
 $$;
-alter role app_loto_pls with nologin;
+alter role app_loto_pls nologin;
 --
 set role app_loto_owner;
 --
@@ -45,6 +42,12 @@ grant usage on schema work to app_loto_pls;
 grant execute on all functions in schema work to app_loto_pls;
 alter default privileges for role app_loto_owner in schema work grant execute on functions to app_loto_pls;
 --
+grant usage on schema api to app_loto_pls;
+grant execute on all functions in schema api to app_loto_pls;
+alter default privileges for role app_loto_owner in schema api grant execute on functions to app_loto_pls;
+--
+reset role;
+set role postgres;
 -- mon user unix/pg (login) récupère les droits via membership
 grant app_loto_pls to :user_local;
 --

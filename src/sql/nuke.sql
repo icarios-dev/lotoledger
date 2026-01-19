@@ -17,9 +17,6 @@ revoke app_loto_pls from :user_local;
 
 -- 4) supprimer rôles (ordre: dépendants -> propriétaires)
 drop role if exists app_loto_pls;
-
 drop role if exists app_loto_user;
-
 drop role if exists app_loto_admin;
-
 drop role if exists app_loto_owner;

@@ -1,94 +1,122 @@
--- build.sql
--- à exécuter en tant que superuser (une fois) dans la base app_loto
--- prépare: schémas + privilèges par défaut
 begin;
--- --------------------------
--- schémas
--- --------------------------
-create schema if not exists app authorization app_loto_owner;
-create schema if not exists work authorization app_loto_owner;
-create schema if not exists api authorization app_loto_owner;
--- aucun accès implicite
-revoke all on schema public from public;
-revoke all on schema api from public;
-revoke all on schema app from public;
-revoke all on schema work from public;
 --
-alter role app_loto_admin set search_path = work, app;
--- -------------------------------
--- tables & functions
--- ---------------------------------
 set role app_loto_owner;
--- function in work (import helpers)
-create or replace function work.normalize_draw_day(input text)
-    returns text
+--
+-- place nette
+--
+-- pgls-ignore-start lint/safety/banDropTable
+drop table if exists app.draws, work.raw1, work.raw234, work.raw5;
+-- pgls-ignore-end lint/safety/banDropTable
+drop type if exists app.rule_set, app.bonus_type, app.day;
+drop domain if exists app.main_num, app.sub;
+--
+-- contraintes / types custom
+--
+create type app.rule_set as enum(
+    'legacy_6p_comp',
+    'modern_5p_chance',
+    'second_5p'
+);
+create type app.bonus_type as enum(
+    'chance',
+    'complementaire'
+);
+create type app.day as enum(
+    'lundi',
+    'mardi',
+    'mercredi',
+    'jeudi',
+    'vendredi',
+    'samedi',
+    'dimanche'
+);
+create domain app.main_num as int check (value between 1 and 49);
+create domain app.sub as int check (value between 1 and 2);
+--
+-- canonical table in app
+--
+-- pgls-ignore-start typecheck
+create or replace function app.expected_main_count(rs app.rule_set)
+    returns int
     language sql
     immutable
     as $$
     select
-        case upper(btrim(coalesce(input, '')))
-        when 'lundi' then
-            'lundi'
-        when 'mardi' then
-            'mardi'
-        when 'mercredi' then
-            'mercredi'
-        when 'jeudi' then
-            'jeudi'
-        when 'vendredi' then
-            'vendredi'
-        when 'samedi' then
-            'samedi'
-        when 'dimanche' then
-            'dimanche'
-        when 'lu' then
-            'lundi'
-        when 'ma' then
-            'mardi'
-        when 'me' then
-            'mercredi'
-        when 'mer' then
-            'mercredi'
-        when 'je' then
-            'jeudi'
-        when 've' then
-            'vendredi'
-        when 'sa' then
-            'samedi'
-        when 'sam' then
-            'samedi'
-        when 'di' then
-            'dimanche'
-        when 'dim' then
-            'dimanche'
-        else
-            null
-        end;
+        case rs
+        when 'legacy_6p_comp' then
+            6
+        when 'modern_5p_chance' then
+            5
+        when 'second_5p' then
+            5
+        end
 $$;
--- canonical table in app
-create table if not exists app.draws(
+-- pgls-ignore-end typecheck
+--
+-- pgls-ignore-start typecheck
+create or replace function app.array_no_dupes(a int[])
+    returns boolean
+    language sql
+    immutable
+    as $$
+    select
+        cardinality(a) = cardinality(array( select distinct unnest(a)))
+$$;
+-- pgls-ignore-end typecheck
+--
+-- pgls-ignore-start typecheck
+create or replace function app.valid_bonus(bt app.bonus_type, bv int)
+    returns boolean
+    language sql
+    immutable
+    as $$
+    select
+      (bt is null and bv is null)
+      or (bt = 'chance' and bv between 1 and 10)
+      or (bt = 'complementaire' and bv between 1 and 49)
+$$;
+-- pgls-ignore-end typecheck
+--
+-- pgls-ignore-start typecheck
+create or replace function app.bonus_expected(rs app.rule_set, bt app.bonus_type)
+    returns boolean
+    language sql
+    immutable
+    as $$
+    select
+      (rs = 'legacy_6p_comp' and bt = 'complementaire')
+      or (rs = 'modern_5p_chance' and bt = 'chance')
+      or (rs = 'second_5p' and bt is null)
+$$;
+-- pgls-ignore-end typecheck
+--
+create table app.draws(
     id bigserial primary key,
-    rule_set text not null, -- 'legacy_6p_comp' | 'modern_5p_chance' | 'second_5p'
-    source_file text not null, -- basename ex: 'loto-2019-2025.csv'
-    draw_ref text,
-    draw_sub text,
+    rule_set app.rule_set not null,
+    draw_ref int not null,
+    draw_sub app.sub,
     draw_date date not null,
-    draw_dow smallint,
-    draw_day text,
-    order_nums int[] not null,
-    main_sorted int[] not null,
-    bonus_type text, -- 'chance' | 'complementaire' | null
-    bonus_value int,
-    draw_key text not null
+    order_nums app.main_num[] not null,
+    main_sorted app.main_num[] not null,
+    bonus_type app.bonus_type,
+    bonus_value int, -- plage vérifiée par contrainte
+    draw_key text generated always as (
+		app.make_draw_key(main_sorted, bonus_type, bonus_value)
+	) stored,
+    unique (rule_set, draw_ref, draw_sub),
+    constraint order_nums_len check (array_length(order_nums, 1) = app.expected_main_count(rule_set)),
+    constraint array_same_len check (array_length(main_sorted, 1) = array_length(order_nums, 1)),
+    constraint no_dupes check (app.array_no_dupes(main_sorted)),
+    constraint expected_bonus check (app.bonus_expected(rule_set, bonus_type)),
+    constraint bonus_valid check (app.valid_bonus(bonus_type, bonus_value))
 );
 create index if not exists draws_date_idx on app.draws(draw_date);
 create index if not exists draws_main_sorted_gin on app.draws using gin(main_sorted);
 create index if not exists draws_order_nums_gin on app.draws using gin(order_nums);
-create index if not exists draws_draw_key_idx on app.draws(draw_key);
-alter table app.draws
-    add constraint draws_event_uniq unique (rule_set, draw_ref, draw_sub);
+create index if not exists draws_draw_key_idx on app.draws(rule_set, draw_key);
+--
 -- staging tables in work
-drop table if exists work.raw1;
+--
 create table work.raw1(
     annee_numero_de_tirage text,
     "1er_ou_2eme_tirage" text,
@@ -122,8 +150,36 @@ create table work.raw1(
     devise text,
     trailing_empty text
 );
-drop table if exists work.raw234;
-create table work.raw234(
+create table work.raw2(
+    annee_numero_de_tirage text,
+    jour_de_tirage text,
+    date_de_tirage text,
+    date_de_forclusion text,
+    boule_1 text,
+    boule_2 text,
+    boule_3 text,
+    boule_4 text,
+    boule_5 text,
+    numero_chance text,
+    combinaison_gagnante_en_ordre_croissant text,
+    nombre_de_gagnant_au_rang1 text,
+    rapport_du_rang1 text,
+    nombre_de_gagnant_au_rang2 text,
+    rapport_du_rang2 text,
+    nombre_de_gagnant_au_rang3 text,
+    rapport_du_rang3 text,
+    nombre_de_gagnant_au_rang4 text,
+    rapport_du_rang4 text,
+    nombre_de_gagnant_au_rang5 text,
+    rapport_du_rang5 text,
+    nombre_de_gagnant_au_rang6 text,
+    rapport_du_rang6 text,
+    numero_jokerplus text,
+    devise text,
+    -- les lignes finissent par un ';' (champ vide terminal)
+    trailing_empty text
+);
+create table work.raw34(
     annee_numero_de_tirage text,
     jour_de_tirage text,
     date_de_tirage text,
@@ -161,7 +217,6 @@ create table work.raw234(
     -- les lignes finissent par un ';' (champ vide terminal)
     trailing_empty text
 );
-drop table if exists work.raw5;
 create table work.raw5(
     annee_numero_de_tirage text,
     jour_de_tirage text,
@@ -214,36 +269,7 @@ create table work.raw5(
     devise text,
     trailing_empty text
 );
-------------------------------
--- privilèges
--- -----------------------------
--- schema visibility
-grant usage on schema app to app_loto_admin;
-grant usage on schema work to app_loto_admin;
-grant usage on schema api to app_loto_user;
--- etl can load data (rebuild: needs truncate too)
-grant select, insert on app.draws to app_loto_admin;
-grant truncate on app.draws to app_loto_admin;
-grant usage, select on sequence app.draws_id_seq
-    to app_loto_admin;
--- work objects (etl full control on staging)
-grant select, insert, update, delete, truncate on work.raw1 to app_loto_admin;
-grant select, insert, update, delete, truncate on work.raw234 to app_loto_admin;
-grant select, insert, update, delete, truncate on work.raw5 to app_loto_admin;
-grant execute on all functions in schema work to app_loto_admin;
-grant execute on all functions in schema api to app_loto_user;
--- default privileges for future objects created by app_loto_owner
-alter default privileges for role app_loto_owner in schema app grant
-select
-, insert on tables to app_loto_admin;
-alter default privileges for role app_loto_owner in schema app grant usage,
-select
-    on sequences to app_loto_admin;
--- work: staging/etl uniquement (l'app n'y touche pas)
-alter default privileges for role app_loto_owner in schema work grant
-select
-, insert, update, delete on tables to app_loto_admin;
-alter default privileges for role app_loto_owner in schema work grant execute on functions to app_loto_admin;
-alter default privileges for role app_loto_owner in schema api grant execute on functions to app_loto_user;
+--
 reset role;
+--
 commit;

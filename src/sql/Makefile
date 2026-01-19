@@ -1,6 +1,7 @@
-PG := /usr/bin/env psql
 DB := app_loto
+PG := /usr/bin/env psql
 DEBUG := # -e
+PG_OPTS := -d $(DB) -v ON_ERROR_STOP=1 $(DEBUG)
 BASENAME := /usr/bin/env basename
 ASSETS_DIR := /home/bildoon/dev/loto/assets
 SEED1 := $(ASSETS_DIR)/loto-1976-2008.csv
@@ -11,35 +12,48 @@ SEED5 := $(ASSETS_DIR)/loto-2019-2025.csv
 
 all:
 
-dropdb:
+_dropdb:
 	sudo -u postgres \
-		dropdb $(DEBUG) -U postgres --if-exists $(DB)
+		dropdb $(DEBUG) --if-exists $(DB)
 
-create_roles: create_roles.sql
-	sudo -u postgres $(PG) -U postgres \
+_create_roles: create_roles.sql
+	sudo -u postgres $(PG) \
 		-v ON_ERROR_STOP=1 \
-		-v user_password="$${APP_LOTO_USER_PASSWORD}" \
-		-v admin_password="$${APP_LOTO_ADMIN_PASSWORD}" \
 		-f $<
-
-createdb: dropdb create_roles
-	sudo -u postgres \
-		createdb $(DEBUG) -U postgres --owner app_loto_owner $(DB)
-
-pls: pls.sql
-	sudo -u postgres $(PG) -U postgres \
+	sudo -u postgres $(PG) \
 		-v ON_ERROR_STOP=1 \
+		-c "alter role app_loto_user with login password '$${APP_LOTO_USER_PASSWORD}' ;" \
+		-c "alter role app_loto_admin with login password '$${APP_LOTO_ADMIN_PASSWORD}' ;"
+
+_createdb: _dropdb _create_roles
+	sudo -u postgres \
+		createdb $(DEBUG) --owner app_loto_owner $(DB)
+
+_create_schemas: create_schemas.sql
+	sudo -u postgres $(PG) $(PG_OPTS) -f $<
+
+_role_pls: pls.sql
+	sudo -u postgres $(PG) $(PG_OPTS) \
 		-v user_local="$${USER}" \
 		-f $<
 
+_create_tables: create_tables.sql
+	sudo -u postgres $(PG) $(PG_OPTS) -f $<
+
+_set_privileges: set_privileges.sql
+	sudo -u postgres $(PG) $(PG_OPTS) -f $<
+
+_functions:
+	make -C functions work
+
+reset: _createdb _create_schemas _role_pls
+
+build: _create_tables _set_privileges _functions
+
 nuke: nuke.sql
-	sudo -u postgres $(PG) -U postgres \
-		-v user_local="$${USER}" -f $<
-
-reset: createdb pls.sql
-
-build: build.sql
-	sudo -u postgres $(PG) -d $(DB) -f $<
+	sudo -u postgres $(PG) \
+		-v user_local="$${USER}" \
+		-f $<
 
 populate: populate.sql $(SEED1) $(SEED2) $(SEED3) $(SEED4) $(SEED5)
 	$(PG) -U postgres -d $(DB) \
@@ -51,4 +65,4 @@ populate: populate.sql $(SEED1) $(SEED2) $(SEED3) $(SEED4) $(SEED5)
 		-v f2019_2025="'$(SEED5)'" -v s2019_2025=$(notdir $(SEED5)) \
 		-f $<
 
-.PHONY: all dropdb create_roles createdb pls reset build populate
+.PHONY: all _dropdb _create_roles _createdb _role_pls _create_tables _set_privileges _functions reset build populate nuke

@@ -1,3 +1,6 @@
+begin;
+set role app_loto_owner;
+
 create or replace function api.draw_exists(main_sorted int[], bonus_value int)
     returns boolean
     language sql
@@ -14,6 +17,8 @@ create or replace function api.draw_exists(main_sorted int[], bonus_value int)
                 d.main_sorted = $1
                 and d.bonus_value = $2
                 and d.rule_set in('modern_5p_chance', 'legacy_6p_comp') -- adapte
-                and d.draw_sub in('principal') -- adapte
 );
 $$;
+
+reset role;
+commit;

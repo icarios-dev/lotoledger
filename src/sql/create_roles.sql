@@ -27,7 +27,6 @@ begin
 end if;
 end
 $$;
-alter role app_loto_user with login password :'user_password';
 do $$
 begin
     if not exists(
@@ -41,5 +40,4 @@ begin
 end if;
 end
 $$;
-alter role app_loto_admin with login password :'admin_password';
 commit;
