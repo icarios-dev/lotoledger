@@ -13,7 +13,8 @@ grant usage, select on sequence app.draws_id_seq
     to app_loto_admin;
 -- work objects (etl full control on staging)
 grant select, insert, update, delete, truncate on work.raw1 to app_loto_admin;
-grant select, insert, update, delete, truncate on work.raw234 to app_loto_admin;
+grant select, insert, update, delete, truncate on work.raw2 to app_loto_admin;
+grant select, insert, update, delete, truncate on work.raw34 to app_loto_admin;
 grant select, insert, update, delete, truncate on work.raw5 to app_loto_admin;
 grant execute on all functions in schema work to app_loto_admin;
 grant execute on all functions in schema api to app_loto_user;

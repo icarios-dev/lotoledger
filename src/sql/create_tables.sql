@@ -1,94 +1,11 @@
 begin;
---
 set role app_loto_owner;
---
--- place nette
---
+
 -- pgls-ignore-start lint/safety/banDropTable
-drop table if exists app.draws, work.raw1, work.raw234, work.raw5;
+drop table if exists app.draws, work.raw1, work.raw2, work.raw34, work.raw5;
 -- pgls-ignore-end lint/safety/banDropTable
-drop type if exists app.rule_set, app.bonus_type, app.day;
-drop domain if exists app.main_num, app.sub;
---
--- contraintes / types custom
---
-create type app.rule_set as enum(
-    'legacy_6p_comp',
-    'modern_5p_chance',
-    'second_5p'
-);
-create type app.bonus_type as enum(
-    'chance',
-    'complementaire'
-);
-create type app.day as enum(
-    'lundi',
-    'mardi',
-    'mercredi',
-    'jeudi',
-    'vendredi',
-    'samedi',
-    'dimanche'
-);
-create domain app.main_num as int check (value between 1 and 49);
-create domain app.sub as int check (value between 1 and 2);
---
+
 -- canonical table in app
---
--- pgls-ignore-start typecheck
-create or replace function app.expected_main_count(rs app.rule_set)
-    returns int
-    language sql
-    immutable
-    as $$
-    select
-        case rs
-        when 'legacy_6p_comp' then
-            6
-        when 'modern_5p_chance' then
-            5
-        when 'second_5p' then
-            5
-        end
-$$;
--- pgls-ignore-end typecheck
---
--- pgls-ignore-start typecheck
-create or replace function app.array_no_dupes(a int[])
-    returns boolean
-    language sql
-    immutable
-    as $$
-    select
-        cardinality(a) = cardinality(array( select distinct unnest(a)))
-$$;
--- pgls-ignore-end typecheck
---
--- pgls-ignore-start typecheck
-create or replace function app.valid_bonus(bt app.bonus_type, bv int)
-    returns boolean
-    language sql
-    immutable
-    as $$
-    select
-      (bt is null and bv is null)
-      or (bt = 'chance' and bv between 1 and 10)
-      or (bt = 'complementaire' and bv between 1 and 49)
-$$;
--- pgls-ignore-end typecheck
---
--- pgls-ignore-start typecheck
-create or replace function app.bonus_expected(rs app.rule_set, bt app.bonus_type)
-    returns boolean
-    language sql
-    immutable
-    as $$
-    select
-      (rs = 'legacy_6p_comp' and bt = 'complementaire')
-      or (rs = 'modern_5p_chance' and bt = 'chance')
-      or (rs = 'second_5p' and bt is null)
-$$;
--- pgls-ignore-end typecheck
 --
 create table app.draws(
     id bigserial primary key,
@@ -269,7 +186,6 @@ create table work.raw5(
     devise text,
     trailing_empty text
 );
---
+
 reset role;
---
 commit;

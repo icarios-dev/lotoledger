@@ -10,7 +10,7 @@ SEED3 := $(ASSETS_DIR)/loto-2017-2019.csv
 SEED4 := $(ASSETS_DIR)/loto-2019-2019.csv
 SEED5 := $(ASSETS_DIR)/loto-2019-2025.csv
 
-all:
+all: reset build
 
 _dropdb:
 	sudo -u postgres \
@@ -37,18 +37,24 @@ _role_pls: pls.sql
 		-v user_local="$${USER}" \
 		-f $<
 
+_create_types_and_domains: create_types_and_domains.sql
+	sudo -u postgres $(PG) $(PG_OPTS) -f $<
+
 _create_tables: create_tables.sql
 	sudo -u postgres $(PG) $(PG_OPTS) -f $<
 
 _set_privileges: set_privileges.sql
 	sudo -u postgres $(PG) $(PG_OPTS) -f $<
 
-_functions:
+_functions_app:
+	make -C functions app
+
+_functions_work:
 	make -C functions work
 
-reset: _createdb _create_schemas _role_pls
+reset: _createdb _create_schemas _role_pls _create_types_and_domains
 
-build: _create_tables _set_privileges _functions
+build: _functions_app _create_tables _functions_work _set_privileges
 
 nuke: nuke.sql
 	sudo -u postgres $(PG) \

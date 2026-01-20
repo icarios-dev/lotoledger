@@ -17,7 +17,7 @@ with ins as (
 		bonus_value)
 	select
 		'modern_5p_chance',
-		r.annee_numero_de_tirage,
+		r.annee_numero_de_tirage::int,
 		null,
 		d.draw_date,
 		array[
@@ -32,18 +32,17 @@ with ins as (
 		bv.bonus_value
 	from work.raw34 r
 	cross join lateral
-		(
-			select to_date(btrim(r.date_de_tirage), 'dd/mm/yyyy') as draw_date
+		(select
+			to_date(btrim(r.date_de_tirage), 'dd/mm/yyyy') as draw_date
 		) d
 	cross join lateral
-		(
-			select
-				string_to_array(split_part(btrim(r.combinaison_gagnante_en_ordre_croissant), '+', 1), '-')::int[]
-				as main_sorted
+		(select
+			string_to_array(split_part(btrim(r.combinaison_gagnante_en_ordre_croissant), '+', 1), '-')::int[]
+			as main_sorted
 		) ms
 	cross join lateral
-		(
-			select nullif(btrim(r.numero_chance), '')::int as bonus_value
+		(select
+			nullif(btrim(r.numero_chance), '')::int as bonus_value
 		) bv
 	where
 		nullif(btrim(r.combinaison_gagnante_en_ordre_croissant), '') is not null
