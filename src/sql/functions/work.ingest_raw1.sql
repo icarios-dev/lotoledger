@@ -8,33 +8,36 @@ as $$
 with ins as (
 	insert into app.draws(
 		rule_set,
-		draw_ref,
 		draw_sub,
 		draw_date,
 		order_nums,
-		main_sorted,
 		bonus_type,
 		bonus_value)
 	select
-		'legacy_6p_comp',
-		r.annee_numero_de_tirage::int,
-		btrim(r."1er_ou_2eme_tirage")::app.sub,
+		'legacy_6p_comp'::app.rule_set,
+		btrim(r."1er_ou_2eme_tirage")::app.draw_sub,
 		to_date(btrim(r.date_de_tirage), 'yyyymmdd'),
 		array[
-			nullif(btrim(r.boule_1), '')::int,
-			nullif(btrim(r.boule_2), '')::int,
-			nullif(btrim(r.boule_3), '')::int,
-			nullif(btrim(r.boule_4), '')::int,
-			nullif(btrim(r.boule_5), '')::int,
-			nullif(btrim(r.boule_6), '')::int
+			work.to_main_num(r.boule_1),
+			work.to_main_num(r.boule_2),
+			work.to_main_num(r.boule_3),
+			work.to_main_num(r.boule_4),
+			work.to_main_num(r.boule_5),
+			work.to_main_num(r.boule_6)
 			],
-		string_to_array(btrim(r.combinaison_gagnante_en_ordre_croissant), '-')::int[],
-		'complementaire',
+		'complementaire'::app.bonus_type,
 		nullif(btrim(r.boule_complementaire), '')::int
 	from work.raw1 r
 	where
-		nullif(btrim(r.combinaison_gagnante_en_ordre_croissant), '') is not null
-	on conflict(rule_set, draw_ref, draw_sub) do nothing
+		work.present(r.date_de_tirage)
+		and work.present(r.boule_1)
+		and work.present(r.boule_2)
+		and work.present(r.boule_3)
+		and work.present(r.boule_4)
+		and work.present(r.boule_5)
+		and work.present(r.boule_6)
+		and work.present(r.boule_complementaire)
+	on conflict(rule_set, draw_date, draw_sub) do nothing
 	returning 1
 )
 select count(*) from ins;

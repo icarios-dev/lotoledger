@@ -13,12 +13,12 @@ create or replace function app.expected_main_count(rs app.rule_set)
             6
         when 'modern_5p_chance' then
             5
-        when 'second_5p' then
+        when 'modern_5p' then
             5
         end
 $$;
 -- pgls-ignore-end typecheck
---
+
 -- pgls-ignore-start typecheck
 create or replace function app.array_no_dupes(a int[])
     returns boolean
@@ -29,7 +29,7 @@ create or replace function app.array_no_dupes(a int[])
         cardinality(a) = cardinality(array( select distinct unnest(a) ))
 $$;
 -- pgls-ignore-end typecheck
---
+
 -- pgls-ignore-start typecheck
 create or replace function app.valid_bonus(bt app.bonus_type, bv int)
     returns boolean
@@ -42,7 +42,7 @@ create or replace function app.valid_bonus(bt app.bonus_type, bv int)
       or (bt = 'complementaire' and bv between 1 and 49)
 $$;
 -- pgls-ignore-end typecheck
---
+
 -- pgls-ignore-start typecheck
 create or replace function app.bonus_expected(rs app.rule_set, bt app.bonus_type)
     returns boolean
@@ -52,7 +52,7 @@ create or replace function app.bonus_expected(rs app.rule_set, bt app.bonus_type
     select
       (rs = 'legacy_6p_comp' and bt = 'complementaire')
       or (rs = 'modern_5p_chance' and bt = 'chance')
-      or (rs = 'second_5p' and bt is null)
+      or (rs = 'modern_5p' and bt is null)
 $$;
 -- pgls-ignore-end typecheck
 
@@ -68,6 +68,18 @@ as $$
 		when p_bonus_value is null then ''
 		else '|' || p_bonus_type || ':' || p_bonus_value::text
 		end;
+$$;
+-- pgls-ignore-end typecheck
+
+-- pgls-ignore-start typecheck
+create or replace function app.sort_main_nums(nums app.main_num[])
+returns app.main_num[]
+language sql
+immutable
+strict
+as $$
+	select array_agg(n order by n)
+	from unnest(nums) as n;
 $$;
 -- pgls-ignore-end typecheck
 
