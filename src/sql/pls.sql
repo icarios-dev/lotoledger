@@ -22,7 +22,7 @@ alter role app_loto_pls nologin;
 --
 set role app_loto_owner;
 --
-grant connect on database app_loto to app_loto_pls;
+grant connect on database lotoledger to app_loto_pls;
 -- visibilité schéma
 grant usage on schema app to app_loto_pls;
 -- droit lecture sur objets existants

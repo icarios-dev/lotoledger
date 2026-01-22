@@ -1,4 +1,4 @@
-DB := app_loto
+DB := lotoledger
 PG := /usr/bin/env psql
 DEBUG := # -e
 PG_OPTS := -d $(DB) -v ON_ERROR_STOP=1 $(DEBUG)
