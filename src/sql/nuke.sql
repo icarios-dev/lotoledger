@@ -6,11 +6,11 @@ select
 from
     pg_stat_activity
 where
-    datname = 'app_loto'
+    datname = 'lotoledger'
     and pid <> pg_backend_pid();
 
 -- 2) drop db (hors transaction, et avant les rôles)
-drop database if exists app_loto;
+drop database if exists lotoledger;
 
 -- 3) retirer memberships
 revoke app_loto_pls from :user_local;

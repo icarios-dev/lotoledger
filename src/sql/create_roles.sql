@@ -12,6 +12,8 @@ begin
             rolname = 'app_loto_owner') then
     create role app_loto_owner;
 end if;
+grant app_loto_owner to neondb_owner;
+alter database lotoledger owner to app_loto_owner;
 end
 $$;
 do $$

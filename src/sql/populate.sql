@@ -2,7 +2,7 @@
 -- à exécuter avec un user membre de etl_write
 --
 begin;
-set role app_loto_admin;
+-- set role app_loto_admin;
 
 set search_path = work, app;
 
@@ -46,5 +46,5 @@ select work.ingest_raw5();
 select work.ingest_raw5second();
 truncate table work.raw5;
 
-reset role;
+-- reset role;
 commit;

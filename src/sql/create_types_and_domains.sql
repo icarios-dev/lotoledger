@@ -1,8 +1,8 @@
 begin;
 set role app_loto_owner;
 
-drop type if exists app.rule_set, app.bonus_type, app.day cascade;
-drop domain if exists app.main_num, app.sub;
+drop type if exists app.rule_set, app.bonus_type cascade;
+drop domain if exists app.main_num, app.draw_sub cascade;
 --
 --
 create type app.rule_set as enum(

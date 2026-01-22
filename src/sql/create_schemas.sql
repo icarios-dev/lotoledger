@@ -15,7 +15,7 @@ reset role;
 --
 -- as postgres ----------------------------
 --
-set role postgres;
+set role neondb_owner;
 alter role app_loto_admin set search_path = work, app;
 reset role;
 --
