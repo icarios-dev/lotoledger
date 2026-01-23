@@ -6,8 +6,8 @@ COMMAND := $(PROD)
 DATABASE_URL := $(DATABASE_URL_OWNER)
 DEBUG := # -e
 PG_OPTS := -v ON_ERROR_STOP=1 $(DEBUG)
-app_files := app.*.sql
-work_files := work.helpers.sql work.ingest_*.sql
+app_files := app/*.sql
+work_files := work/helpers.sql work/ingest_*.sql
 
 define run_sql
 	$(COMMAND) "$(DATABASE_URL)" $(PG_OPTS) $(addprefix -f , $^)
@@ -23,4 +23,4 @@ work: $(work_files)
 
 api:
 
-.PHONY: all work api
+.PHONY: all work api app
