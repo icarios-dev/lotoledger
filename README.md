@@ -4,7 +4,7 @@ Analyse et historique des tirages du Loto français.
 
 ## stack
 
-* Postgres
+* Postgres (via [Pog](https://github.com/lpil/pog))
 * Gleam
 * Wisp
 * Elm

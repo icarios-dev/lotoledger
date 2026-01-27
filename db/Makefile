@@ -34,6 +34,9 @@ _create_tables: schema/10_tables.sql
 _set_privileges: bootstrap/20_privileges.sql
 	$(run_sql_as_owner)
 
+_functions_api: routines/api/*.sql
+	$(run_sql_as_owner)
+
 _functions_app: routines/app/*.sql
 	$(run_sql_as_owner)
 
@@ -42,7 +45,7 @@ _functions_work: routines/work/helpers.sql routines/work/ingest_*.sql
 
 reset: _create_roles _create_schemas _create_types_and_domains
 
-build: _functions_app _create_tables _functions_work _set_privileges
+build: _functions_app _create_tables _functions_work _set_privileges _functions_api
 
 prod: reset build
 
@@ -59,6 +62,7 @@ nuke: admin/nuke.sql
 		-v user_local="$${USER}" \
 		-f $<
 
-.PHONY: all _create_roles _create_schemas _role_pls _create_types_and_domains \
-	_create_tables _set_privileges _functions_app _functions_work \
+.PHONY: all _create_roles _create_schemas _role_pls \
+	_create_types_and_domains _create_tables _set_privileges \
+	_functions_api _functions_app _functions_work \
 	reset build prod populate nuke

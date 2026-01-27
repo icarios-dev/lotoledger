@@ -1,7 +1,7 @@
 begin;
 set role app_loto_owner;
 
-create or replace function api.draw_exists(main_sorted int[], bonus_value int)
+create or replace function api.draw__exists(main_sorted app.main_num[], bonus_value int)
     returns boolean
     language sql
     security definer
