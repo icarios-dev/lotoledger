@@ -14,7 +14,7 @@
   select 1 ;
   ```
 
-[] _GET /api/rulesets_
+[*] _GET /api/rulesets_
   liste des `rule_set` présents (ou supportés)
   ```sql
   select distinct rule_set from app.draws ;

@@ -2,8 +2,8 @@ import pog
 import wisp.{type Request, type Response}
 
 import interfaces/http/middleware
-import modules/rulesets/presentation/controller.{rulesets} as _
-import modules/system/presentation/controller.{health, home_page} as _
+import modules/rulesets/presentation/controller.{handle_rulesets} as _
+import modules/system/presentation/controller as sc
 
 /// The HTTP request handler- your application!
 ///
@@ -17,14 +17,15 @@ pub fn handle_request(req: Request, db: pog.Connection) -> Response {
   //
   case wisp.path_segments(req) {
     // This matches `/`.
-    [] -> home_page(req)
+    [] -> sc.home_page(req)
 
     // This matches `/health`.
-    ["health"] -> health(req, db)
+    ["health"] -> sc.handle_health(req)
+    ["ready"] -> sc.handle_ready(req, db)
 
     // This matches `/rulesets`.
     // The `id` segment is bound to a variable and passed to the handler.
-    ["rulesets"] -> rulesets(req, db)
+    ["rulesets"] -> handle_rulesets(req, db)
 
     // This matches all other paths.
     _ -> wisp.not_found()

@@ -1,7 +1,7 @@
 begin;
 set role app_loto_owner;
 
-create or replace function api.rulesets__list()
+create or replace function api.rulesets()
 	returns table (rule_set text)
 	language sql
 	security definer
@@ -14,9 +14,6 @@ create or replace function api.rulesets__list()
 	order
 		by d.rule_set;
 $$;
-
-revoke all on function api.list_rulesets() from public;
-grant execute on function api.list_rulesets() to app_loto_user; -- ton rôle applicatif
 
 reset role;
 commit;
