@@ -28,7 +28,10 @@ _create_schemas: bootstrap/10_schemas.sql
 _create_types_and_domains: schema/00_types_and_domains.sql
 	$(run_sql_as_owner)
 
-_create_tables: schema/10_tables.sql
+_create_tables: schema/10_tables_work.sql routines/app/10_*.sql schema/20_tables_app.sql
+	$(run_sql_as_owner)
+
+_create_views: schema/30_views_rulesets.sql
 	$(run_sql_as_owner)
 
 _set_privileges: bootstrap/20_privileges.sql
@@ -37,7 +40,7 @@ _set_privileges: bootstrap/20_privileges.sql
 _functions_api: routines/api/*.sql
 	$(run_sql_as_owner)
 
-_functions_app: routines/app/*.sql
+_functions_app: routines/app/20_*.sql
 	$(run_sql_as_owner)
 
 _functions_work: routines/work/helpers.sql routines/work/ingest_*.sql
@@ -45,7 +48,7 @@ _functions_work: routines/work/helpers.sql routines/work/ingest_*.sql
 
 reset: _create_roles _create_schemas _create_types_and_domains
 
-build: _functions_app _create_tables _functions_work _set_privileges _functions_api
+build: _create_tables _functions_app _functions_work _set_privileges _create_views _functions_api
 
 prod: reset build
 
@@ -65,4 +68,5 @@ nuke: admin/nuke.sql
 .PHONY: all _create_roles _create_schemas _role_pls \
 	_create_types_and_domains _create_tables _set_privileges \
 	_functions_api _functions_app _functions_work \
+	_create_views \
 	reset build prod populate nuke

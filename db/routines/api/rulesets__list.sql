@@ -2,18 +2,19 @@ begin;
 set role app_loto_owner;
 
 create or replace function api.rulesets()
-	returns table (rule_set text)
-	language sql
-	security definer
-	set search_path = app, pg_temp
-	as $$
-	select
-		distinct d.rule_set
-	from
-		app.draws as d
-	order
-		by d.rule_set;
+returns table (rule_set app.rule_set)
+language sql
+stable
+security definer
+set search_path = api, app, pg_temp
+as $$
+	select code as rule_set
+	from api.rule_sets_v1
+	order by code;
 $$;
+
+comment on function api.rulesets() is
+'DEPRECATED: use api.rule_sets_v1 view instead.';
 
 reset role;
 commit;
