@@ -12,7 +12,7 @@ stable
 as $$
 	select d.draw_date, d.main_sorted, d.bonus_value
 	from app.draws d
-	where d.main_sorted @> p_pick
+	where d.main_sorted @> app.normalize_pick(p_pick)
 	order by d.draw_date;
 $$;
 

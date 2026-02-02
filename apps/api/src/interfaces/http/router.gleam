@@ -2,6 +2,7 @@ import pog
 import wisp.{type Request, type Response}
 
 import interfaces/http/middleware
+import modules/pick/presentation/controller as pc
 import modules/rulesets/presentation/controller.{handle_rulesets} as _
 import modules/system/presentation/controller as sc
 
@@ -26,6 +27,8 @@ pub fn handle_request(req: Request, db: pog.Connection) -> Response {
     // This matches `/rulesets`.
     // The `id` segment is bound to a variable and passed to the handler.
     ["rulesets"] -> handle_rulesets(req, db)
+
+    ["pick"] -> pc.handle_pick_stats(req, db)
 
     // This matches all other paths.
     _ -> wisp.not_found()

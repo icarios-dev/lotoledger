@@ -17,6 +17,19 @@ pub type PickError {
   OutOfRange(min: Int, max: Int, got: Int)
 }
 
+/// Normalize une sélection de nombres suivant des règles définies
+///
+pub fn normalize_pick(
+  raw raw: List(Int),
+  min min: Int,
+  max max: Int,
+  size_max size_max: Int,
+) -> Result(List(Int), PickError) {
+  use raw <- try(validate_size(raw, size_max))
+  use raw <- try(validate_range(raw, min, max))
+  Ok(canonicalize(raw))
+}
+
 fn validate_size(raw: List(Int), size_max: Int) -> Result(List(Int), PickError) {
   let size = list.length(raw)
   case size {
@@ -37,8 +50,8 @@ fn validate_range(
   }
 }
 
-// sort + uniq => canonical form
-//
+/// sort + uniq => canonical form
+///
 fn canonicalize(raw: List(Int)) -> List(Int) {
   let sorted = list.sort(raw, int.compare)
   // uniq on sorted list (stable, linear)
@@ -49,15 +62,4 @@ fn canonicalize(raw: List(Int)) -> List(Int) {
     }
   })
   |> list.reverse()
-}
-
-pub fn normalize_pick(
-  raw raw: List(Int),
-  min min: Int,
-  max max: Int,
-  size_max size_max: Int,
-) -> Result(List(Int), PickError) {
-  use raw <- try(validate_size(raw, size_max))
-  use raw <- try(validate_range(raw, min, max))
-  Ok(canonicalize(raw))
 }

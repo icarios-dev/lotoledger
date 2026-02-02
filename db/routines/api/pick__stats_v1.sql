@@ -5,6 +5,7 @@ create or replace function api.pick_stats_v1(p_pick app.main_num[])
 returns jsonb
 language sql
 stable
+security definer
 as $$
 select jsonb_build_object(
   'pick', p_pick,
@@ -25,7 +26,6 @@ select jsonb_build_object(
   -- , 'pairs',   (select jsonb_agg(to_jsonb(ps)) from app.pair_stats(p_pick) ps)
 )
 $$;
-
 
 reset role;
 commit;

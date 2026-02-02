@@ -40,7 +40,7 @@ _set_privileges: bootstrap/20_privileges.sql
 _functions_api: routines/api/*.sql
 	$(run_sql_as_owner)
 
-_functions_app: routines/app/50_*.sql
+_functions_app: routines/app/50_*.sql routines/app/60_*.sql
 	$(run_sql_as_owner)
 
 _functions_work: routines/work/helpers.sql routines/work/ingest_*.sql
