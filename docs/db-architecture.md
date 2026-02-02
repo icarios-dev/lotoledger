@@ -12,15 +12,46 @@
   préfixé du nom de la base (`app_loto_`) (rôles), et rangé dans des schémas dédiés (objets).
 
 ## schémas
-- `app` : modèle applicatif “stable”
-  - tables de production, vues, indexes
-  - fonctions exposées à l'application (api SQL)
-- `work` : zone de travail / ETL
+
+Pour décider où placer une table ou une fonction :
+  - _Est-ce une vérité du domaine ?_ -> `app`
+  - _Est-ce un détail d'ingestion ou de format ?_ -> `work`
+  - _Est-ce une façon de présenter / exposer ?_ -> `api`
+
+### `app` : modèle applicatif / cœur métier
+Contient tout ce qui définit le domaine, indépendamment de la façon
+dont les données sont importées ou exposées
+
+  - tables métier
+  - types métier
+  - contraintes d'intégrité
+  - fonctions pures exprimant des invariants métier
+
+### `work` : zone de travail / ETL
+
   - tables raw de staging (import CSV)
   - fonctions d’ingestion, normalisation, contrôles
   - scripts d’import (pilotés via `psql \copy`)
 
 **principe** : l'application ne dépend jamais de `work`.
+
+### `api` : surface d'exposition
+Définit comment les données sont exposées à l'extérieur
+
+  - vues orientées lecture
+  - fonctions servant de endpoints SQL
+  - pagination, tri, filtrage
+
+### règle de dépendance
+Les dépendances doivent toujours aller dans ce sens :
+
+`work  →  app  →  api`
+
+* `app` ne dépend jamais de `work` ni de `api`
+* `api` peut lire `app`, jamais l’inverse
+* `work` peut écrire dans `app`, mais ne définit rien de métier
+
+Si cette règle est violée, l’architecture se fragilise.
 
 ## rôles
 - `app_loto_owner` (nologin)

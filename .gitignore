@@ -1,3 +1,7 @@
 .envrc
 postgres-language-server.jsonc
 .pgpass
+*.beam
+*.ez
+build
+erl_crash.dump

@@ -1,0 +1,231 @@
+openapi: 3.0.4
+info:
+  title: LotoLedger API (MVP)
+  version: 0.1.0
+  description: >
+    MVP API: healthcheck, list supported rule sets, list draws filtered by rule_set and date range.
+
+servers:
+  - url: http://localhost:8080
+    description: Local dev
+  - url: https://api.example.com
+    description: Production (placeholder)
+
+tags:
+  - name: System
+  - name: Rulesets
+  - name: Draws
+
+paths:
+  /health:
+    get:
+      tags: [System]
+      summary: Healthcheck
+      operationId: getHealth
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+              examples:
+                ok:
+                  value:
+                    status: ok
+
+  /api/rulesets:
+    get:
+      tags: [Rulesets]
+      summary: List available rule sets
+      description: >
+        Returns the list of rule sets present in the database (or supported by the service).
+      operationId: listRulesets
+      responses:
+        "200":
+          description: List of rule sets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RulesetList"
+
+  /api/draws:
+    get:
+      tags: [Draws]
+      summary: List draws (filtered)
+      description: >
+        Returns raw draw data filtered by rule_set and optional date range.
+        Results are sorted by draw_date descending, then by id descending.
+      operationId: listDraws
+      parameters:
+        - in: query
+          name: rule_set
+          required: true
+          description: Rule set identifier.
+          schema:
+            $ref: "#/components/schemas/RulesetId"
+        - in: query
+          name: from
+          required: false
+          description: Filter draws with draw_date >= from (inclusive).
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: to
+          required: false
+          description: Filter draws with draw_date <= to (inclusive).
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: limit
+          required: false
+          description: Max number of items to return.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+      responses:
+        "200":
+          description: A list of draws
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DrawList"
+        "400":
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    Health:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+
+    Error:
+      type: object
+      additionalProperties: false
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          description: Stable machine-readable error code.
+          example: invalid_argument
+        message:
+          type: string
+          description: Human-readable error message.
+          example: rule_set is required
+        details:
+          type: object
+          description: Optional structured error details.
+          additionalProperties: true
+
+    RulesetId:
+      type: string
+      description: Identifier of a lottery rule set.
+      example: fr_loto
+
+    Ruleset:
+      type: object
+      additionalProperties: false
+      required: [id]
+      properties:
+        id:
+          $ref: "#/components/schemas/RulesetId"
+        label:
+          type: string
+          nullable: true
+          description: Optional human-readable label.
+          example: "Français - Loto"
+
+    RulesetList:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Ruleset"
+
+    Bonus:
+      type: object
+      additionalProperties: false
+      required: [type, value]
+      properties:
+        type:
+          type: string
+          description: Bonus category (depends on the rule set).
+          example: chance
+        value:
+          type: integer
+          minimum: 0
+          example: 7
+
+    Draw:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - rule_set
+        - draw_ref
+        - draw_date
+        - order_nums
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 12345
+        rule_set:
+          $ref: "#/components/schemas/RulesetId"
+        draw_ref:
+          type: integer
+          description: Draw reference number in the official dataset.
+          example: 2026013
+        draw_sub:
+          type: string
+          nullable: true
+          description: Optional sub-draw / variant for a given draw_ref.
+          example: A
+        draw_date:
+          type: string
+          format: date
+          example: "2026-01-21"
+        order_nums:
+          type: array
+          description: Main numbers in their original order.
+          items:
+            type: integer
+            minimum: 0
+          example: [3, 14, 22, 35, 41]
+        main_sorted:
+          type: array
+          description: Main numbers sorted ascending (optional; may be computed server-side).
+          items:
+            type: integer
+            minimum: 0
+          nullable: true
+          example: [3, 14, 22, 35, 41]
+        bonus:
+          $ref: "#/components/schemas/Bonus"
+          nullable: true
+
+    DrawList:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Draw"
