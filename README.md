@@ -13,18 +13,20 @@ Analyse et historique des tirages du Loto français.
 
 * base de données : [Neon.com](neon.com)
 
-## réflexions
+## Sources de données
 
-### Disclaimer
-LotoLedger n'a aucune vocation prédictive. Les statistiques présentées
-portent exclusivement sur des données historiques.
+Les données de tirages utilisées dans ce projet proviennent des fichiers
+CSV mis à disposition publiquement par La Française des Jeux (FDJ).
 
-#### notes Footer
-LotoLedger est un service indépendant, sans aucun lien avec la Française
-des Jeux (FDJ).
+Ces données sont utilisées exclusivement à des fins d’analyse
+statistique et de visualisation.
 
-#### notes À propos
-LotoLedger est un projet indépendant et n’est ni affilié, ni sponsorisé,
-ni approuvé par la Française des Jeux (FDJ).
-Les données utilisées proviennent de sources publiques et sont
-exploitées à des fins d’analyse statistique uniquement.
+Ce projet est indépendant et n’est ni affilié, ni sponsorisé, ni
+approuvé par La Française des Jeux.
+
+Aucun droit de propriété n’est revendiqué sur les données sources.
+
+## Licence
+
+Le code source du projet est distribué sous licence AGPLv3.
+Les données sources restent la propriété de leurs producteurs respectifs.
