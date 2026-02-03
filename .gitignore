@@ -5,3 +5,4 @@ postgres-language-server.jsonc
 *.ez
 build
 erl_crash.dump
+db/**/datasets/*.csv
