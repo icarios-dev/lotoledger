@@ -7,3 +7,4 @@ build
 erl_crash.dump
 db/**/datasets/*.csv
 tmp/
+assets/

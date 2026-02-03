@@ -16,5 +16,6 @@ pub fn start() {
     wisp_mist.handler(handler, secret_key_base)
     |> mist.new
     |> mist.port(port)
+    |> mist.bind("0.0.0.0")
     |> mist.start
 }

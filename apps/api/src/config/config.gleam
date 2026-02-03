@@ -8,10 +8,11 @@ pub type Config {
 }
 
 pub fn load() -> Result(Config, String) {
-  use port <- result.try(
+  let port =
     envoy.get("PORT")
-    |> result.map_error(fn(_) { "PORT is missing" }),
-  )
+    |> result.unwrap("3000")
+    |> int.parse
+    |> result.unwrap(3000)
 
   use db <- result.try(
     envoy.get("DATABASE_URL_USER")
@@ -23,13 +24,5 @@ pub fn load() -> Result(Config, String) {
     |> result.map_error(fn(_) { "SECRET_KEY is missing" }),
   )
 
-  Ok(Config(
-    port: port |> int.parse |> result.unwrap(3000),
-    database_url: db,
-    secret_key: secret_key,
-  ))
-}
-
-pub fn main() {
-  echo load()
+  Ok(Config(port: port, database_url: db, secret_key: secret_key))
 }
