@@ -17,4 +17,7 @@ Les fichiers CSV ne sont pas versionnés dans ce dépôt.
 
 Pour les récupérer localement :
 
-`make data` (ou `./scripts/fetch_data.sh`), puis `make populate`.
+```sh
+make -C ops data
+make -C db populate
+```

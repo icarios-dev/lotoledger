@@ -9,10 +9,6 @@ Analyse et historique des tirages du Loto français.
 * Wisp
 * Elm
 
-## hébergements
-
-* base de données : [Neon.com](neon.com)
-
 ## Sources de données
 
 Les données de tirages utilisées dans ce projet proviennent des fichiers
