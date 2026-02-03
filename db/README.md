@@ -10,3 +10,11 @@
   tes CSV historiques (source brute), bien séparés des seeds
 * __admin/__
   scripts “outils” (nuke, test PLS, etc.)
+
+## Récupération des données
+
+Les fichiers CSV ne sont pas versionnés dans ce dépôt.
+
+Pour les récupérer localement :
+
+`make data` (ou `./scripts/fetch_data.sh`), puis `make populate`.
