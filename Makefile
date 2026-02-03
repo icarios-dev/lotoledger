@@ -1,5 +1,7 @@
+PORT ?= 3000
+
 build_api:
-	docker build -t loto-api -f apps/api/Dockerfile --load .
+	docker build -t loto-api -f apps/api/Dockerfile --load apps/api
 
 run_api:
 	docker run -p $(PORT):3000 -e DATABASE_URL_USER="$(DATABASE_URL_USER)" -e SECRET_KEY="$(SECRET_KEY)" loto-api
