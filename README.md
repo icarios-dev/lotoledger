@@ -30,3 +30,6 @@ Aucun droit de propriété n’est revendiqué sur les données sources.
 
 Le code source du projet est distribué sous licence AGPLv3.
 Les données sources restent la propriété de leurs producteurs respectifs.
+
+
+Copyright (C) 2026 Arnaud "icarios" Pithon <arnaud@pithon.dev>
